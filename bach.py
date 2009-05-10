@@ -1,13 +1,6 @@
 #!/usr/bin/env python
-from getpass import getpass
 from mechanize import Browser, FormNotFoundError, HTTPError, LinkNotFoundError
 from urllib import urlencode
-
-config = {
-    'u': str(input('User Code: ')),
-    'p': getpass('PIN: '),
-    'n': str(input('Account Number: '))
-}
 
 def servlet_url(name):
     return 'https://online.bankaustria.at/servlet/%s' % name
@@ -93,10 +86,16 @@ class BachBrowser(object):
         self._open_root()
         return [link.text for link in self._b.links(predicate=is_account_link)]
 
+
 if __name__ == '__main__':
+    import getpass, json, os.path
+    p = os.path.expanduser('~/.bachrc')
+    c = json.load(open(p)) if os.path.exists(p) else {}
     b = BachBrowser()
-    b.login(config['u'], config['p'])
+    b.login(c.get('user') or str(input('User: ')),
+            c.get('pin') or getpass.getpass('PIN: '))
     try:
-        print b.read_account(config['n']),
+        for acct in c.get('accounts') or b.list_accounts():
+            print b.read_account(acct),
     finally:
         b.logout()
