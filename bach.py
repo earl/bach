@@ -52,9 +52,6 @@ class BachBrowser(object):
             if e.code != 503:
                 raise e
 
-    def _read_response(self):
-        return self._b.response().read()
-
     def _open_root(self):
         self._b.open(self._root_url)
 
@@ -66,7 +63,7 @@ class BachBrowser(object):
         except LinkNotFoundError, e:
             raise AccountNotFoundError(account_re)
         args = dict(link.attrs)['onclick'].split("'")
-        return args[1], args[3]
+        return args[1], args[3].replace(' ', '%20')
 
     def _open_account(self, account_re):
         # assumes that the browser is on the proper page (root)
@@ -77,7 +74,7 @@ class BachBrowser(object):
     def _open_download(self, mode='csv'):
         # assumes that the browser is on the proper page (account detail)
         self._b.select_form('PrintDownload')
-        self._b.form.action = servlet_url('GiroKontoDetail')
+        self._b.form.action = self._b.geturl()
         self._b.form.set_all_readonly(False)
         self._b['downloadfilename'] = 'records.%s' % mode
         self._b['downloadmode'] = '%syes' % mode
@@ -88,8 +85,13 @@ class BachBrowser(object):
         self._open_root()
         self._open_account(account)
         self._open_download(mode)
-        return self._read_response()
+        r = self._b.response()
+        t = r.info().get('content-type')
+        return r.read() if t and not t.startswith('text/html') else None
 
+    def list_accounts(self):
+        self._open_root()
+        return [link.text for link in self._b.links(predicate=is_account_link)]
 
 if __name__ == '__main__':
     b = BachBrowser()
