@@ -90,11 +90,17 @@ class BachBrowser(object):
 def configure():
     import getpass, json, optparse, os, os.path, sys
     optp = optparse.OptionParser(usage='usage: %prog [options]')
-    optp.add_option('-c', dest='config', default='~/.bachrc')
-    optp.add_option('-u', dest='user')
-    optp.add_option('-p', dest='pin')
+    optp.add_option('-c', dest='config', default='~/.bachrc',
+            metavar='FILE',
+            help='use config options from FILE. (default: ~/.bachrc)')
+    optp.add_option('-u', dest='user', default=None,
+            help='set user code to USER.')
+    optp.add_option('-p', dest='pin', default=None,
+            help='set pin to PIN.')
     optp.add_option('-a', dest='accounts', default=[],
-                          action='append', metavar='ACCOUNT')
+            metavar='ACCOUNT', action='append',
+            help='fetch details for ACCOUNT. may be used more than once. ' +
+                 '(default: all accounts)')
     (options, args) = optp.parse_args()
     if len(args) != 0:
         optp.error('no arguments expected')
