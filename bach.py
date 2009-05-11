@@ -105,7 +105,8 @@ def configure():
         if 0600 != stat.S_IMODE(os.stat(config_path)[stat.ST_MODE]):
             optp.error('config file %s must have permissions 600' % config_path)
         config.update(json.load(open(config_path)))
-    config.update(options.__dict__)
+    for option, value in options.__dict__.items():
+        config.setdefault(option, value)
 
     if not config['user'] or not config['pin']:
         if not os.isatty(sys.stdin.fileno()):
