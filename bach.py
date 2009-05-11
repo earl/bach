@@ -87,13 +87,37 @@ class BachBrowser(object):
         return [link.text for link in self._b.links(predicate=is_account_link)]
 
 
+def configure():
+    import getpass, json, optparse, os, os.path, stat, sys
+    optp = optparse.OptionParser(usage='usage: %prog [options]')
+    optp.add_option('-c', dest='config', default='~/.bachrc')
+    optp.add_option('-u', dest='user')
+    optp.add_option('-p', dest='pin')
+    optp.add_option('-a', dest='accounts', default=[],
+                          action='append', metavar='ACCOUNT')
+    (options, args) = optp.parse_args()
+    if len(args) != 0:
+        optp.error('no arguments expected')
+
+    config_path = os.path.expanduser(options.config)
+    config = {}
+    if os.path.exists(config_path):
+        if 0600 != stat.S_IMODE(os.stat(config_path)[stat.ST_MODE]):
+            optp.error('config file %s must have permissions 600' % config_path)
+        config.update(json.load(open(config_path)))
+    config.update(options.__dict__)
+
+    if not config['user'] or not config['pin']:
+        if not os.isatty(sys.stdin.fileno()):
+            optp.error('missing USER and/or PIN')
+    config['user'] = config['user'] or str(input('User: '))
+    config['pin'] = config['pin'] or getpass.getpass('PIN: ')
+    return config
+
 if __name__ == '__main__':
-    import getpass, json, os.path
-    p = os.path.expanduser('~/.bachrc')
-    c = json.load(open(p)) if os.path.exists(p) else {}
+    c = configure()
     b = BachBrowser()
-    b.login(c.get('user') or str(input('User: ')),
-            c.get('pin') or getpass.getpass('PIN: '))
+    b.login(c['user'], c['pin'])
     try:
         for acct in c.get('accounts') or b.list_accounts():
             print b.read_account(acct),
