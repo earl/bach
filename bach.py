@@ -2,12 +2,7 @@
 from mechanize import Browser, FormNotFoundError, HTTPError, LinkNotFoundError
 from urllib import urlencode
 
-def servlet_url(name):
-    return 'https://online.bankaustria.at/servlet/%s' % name
 
-def is_account_link(link):
-    onclick = dict(link.attrs).get('onclick')
-    return onclick and onclick.startswith('javascript:submit_detail(')
 
 class BachError(Exception): pass
 class AccountNotFoundError(BachError): pass
@@ -86,6 +81,13 @@ class BachBrowser(object):
         self._open_root()
         return [link.text for link in self._b.links(predicate=is_account_link)]
 
+def servlet_url(name):
+    return 'https://online.bankaustria.at/servlet/%s' % name
+
+def is_account_link(link):
+    onclick = dict(link.attrs).get('onclick')
+    return onclick and onclick.startswith('javascript:submit_detail(')
+
 
 def configure():
     import getpass, json, optparse, os, os.path, sys
@@ -121,11 +123,14 @@ def configure():
     return config
 
 if __name__ == '__main__':
-    c = configure()
-    b = BachBrowser()
-    b.login(c['user'], c['pin'])
     try:
-        for acct in c.get('accounts') or b.list_accounts():
-            print b.read_account(acct),
-    finally:
-        b.logout()
+        c = configure()
+        b = BachBrowser()
+        b.login(c['user'], c['pin'])
+        try:
+            for acct in c.get('accounts') or b.list_accounts():
+                print b.read_account(acct),
+        finally:
+            b.logout()
+    except KeyboardInterrupt:
+        pass
