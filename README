@@ -1,1 +1,4 @@
-A simple hack to fetch CSV statements from Bank Austria's online banking.
+A simple hack to fetch CSV statements from Bank Austria's online banking. Bach
+requires Python and John Lee's mechanize library [1] (also available via PyPI).
+
+[1] http://wwwsearch.sourceforge.net/mechanize/
